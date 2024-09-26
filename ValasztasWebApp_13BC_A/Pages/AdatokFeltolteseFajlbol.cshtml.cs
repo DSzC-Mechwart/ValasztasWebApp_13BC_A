@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using ValasztasWebApp_13BC_A.Models;
 
 namespace ValasztasWebApp_13BC_A.Pages
@@ -14,6 +15,7 @@ namespace ValasztasWebApp_13BC_A.Pages
         {
             _context = context;
             _env = env;
+            //_context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
         [BindProperty]
@@ -37,8 +39,37 @@ namespace ValasztasWebApp_13BC_A.Pages
             }
             //Adatbázisba töltés
             StreamReader sr = new StreamReader(UploadFilePath);
-            //....
+            List<Part> partok = new List<Part>();
+            while (!sr.EndOfStream)
+            {
+                var part = sr.ReadLine().Split()[4];
+                if(!partok.Select(x => x.RovidNev).Contains(part))
+                    partok.Add(new Part { RovidNev = part });
+            }
             sr.Close();
+            foreach (var p in partok)
+            {
+                _context.Partok.Add(p);
+            }
+
+            _context.SaveChanges();
+
+            sr = new StreamReader(UploadFilePath);
+            while (!sr.EndOfStream)
+            {
+                var sor = sr.ReadLine();
+                var elemek = sor.Split();
+                Jelolt ujJelolt = new Jelolt();
+                ujJelolt.Kerulet = int.Parse(elemek[0]);
+                ujJelolt.SzavazatokSzama = int.Parse(elemek[1]);
+                ujJelolt.Nev = elemek[2] + " " + elemek[3];
+                ujJelolt.PartRovidNev = elemek[4];
+                _context.Jeloltek.Add(ujJelolt);
+            }
+            sr.Close();           
+
+
+            _context.SaveChanges();
 
             return Page();
         }
