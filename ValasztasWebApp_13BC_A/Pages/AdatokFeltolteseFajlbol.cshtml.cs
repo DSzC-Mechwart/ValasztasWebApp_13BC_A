@@ -14,8 +14,7 @@ namespace ValasztasWebApp_13BC_A.Pages
             ValasztasDbContext context)
         {
             _context = context;
-            _env = env;
-            //_context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            _env = env;            
         }
 
         [BindProperty]
@@ -39,33 +38,25 @@ namespace ValasztasWebApp_13BC_A.Pages
             }
             //Adatbázisba töltés
             StreamReader sr = new StreamReader(UploadFilePath);
-            List<Part> partok = new List<Part>();
+            sr.ReadLine();
+            List<Part> partok = _context.Partok.ToList();
             while (!sr.EndOfStream)
             {
-                var part = sr.ReadLine().Split()[4];
-                if(!partok.Select(x => x.RovidNev).Contains(part))
-                    partok.Add(new Part { RovidNev = part });
-            }
-            sr.Close();
-            foreach (var p in partok)
-            {
-                _context.Partok.Add(p);
-            }
-
-            _context.SaveChanges();
-
-            sr = new StreamReader(UploadFilePath);
-            while (!sr.EndOfStream)
-            {
-                var sor = sr.ReadLine();
-                var elemek = sor.Split();
+                var line = sr.ReadLine();
+                var elemek = line.Split();
                 Jelolt ujJelolt = new Jelolt();
                 ujJelolt.Kerulet = int.Parse(elemek[0]);
                 ujJelolt.SzavazatokSzama = int.Parse(elemek[1]);
                 ujJelolt.Nev = elemek[2] + " " + elemek[3];
                 ujJelolt.PartRovidNev = elemek[4];
+                if(!partok.Select(x => x.RovidNev).Contains(elemek[4]))
+                {
+                    _context.Partok.Add(new Part { RovidNev = elemek[4] });
+                    partok.Add(new Part { RovidNev = elemek[4] });
+                }
                 _context.Jeloltek.Add(ujJelolt);
             }
+
             sr.Close();           
 
 
